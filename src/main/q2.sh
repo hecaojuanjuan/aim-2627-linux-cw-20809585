@@ -1,10 +1,21 @@
 #!/bin/bash
-# Q2：创建 sentry_ws 四个子目录、两个空文件以及指定脚本和配置。
-# 完整接口与验收规格见 Problem.pdf。只修改本文件，不修改测试或工具。
+# Build the workspace without appending duplicate content on a second run.
 set -eu
-input=${1:?需要输入目录}
-output=${2:?需要输出目录}
+input=${1:?Input directory required}
+output=${2:?Output directory required}
 
-# TODO：删除下方提示和 exit 77，再填写你的命令。
-printf '%s\n' 'Q2 尚未实现' >&2
-exit 77
+workspace="$output/sentry_ws"
+mkdir -p -- "$workspace"/{scripts,config,logs,tmp}
+: > "$workspace/logs/.keep"
+: > "$workspace/tmp/scratch.txt"
+
+cat > "$workspace/scripts/hello.sh" <<'EOF'
+#!/bin/bash
+echo "Hello, AIM Linux!"
+EOF
+
+cat > "$workspace/config/robot.conf" <<'EOF'
+robot=sentry
+mode=training
+log_level=INFO
+EOF

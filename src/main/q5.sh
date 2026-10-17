@@ -1,10 +1,26 @@
 #!/bin/bash
-# Q5：运行 launch.env 给定的启动前检查，保存 stdout/stderr、真实退出码和诊断报告。
-# 完整接口与验收规格见 Problem.pdf。只修改本文件，不修改测试或工具。
+# Capture the preflight program's real status independently of its stderr.
 set -eu
-input=${1:?需要输入目录}
-output=${2:?需要输出目录}
+input=${1:?Input directory required}
+output=${2:?Output directory required}
 
-# TODO：删除下方提示和 exit 77，再填写你的命令。
-printf '%s\n' 'Q5 尚未实现' >&2
-exit 77
+mkdir -p -- "$output"
+source "$input/launch.env"
+
+if bash "$LAUNCH_TOOL" "$MODEL_PATH" "$CAMERA_PATH" \
+    > "$output/stdout.log" 2> "$output/stderr.log"; then
+    status=0
+else
+    status=$?
+fi
+
+case "$status" in
+    0) result=SUCCESS; reason=NONE ;;
+    10) result=FAILED; reason=MODEL_MISSING ;;
+    20) result=FAILED; reason=CAMERA_DENIED ;;
+    *) printf 'Unexpected preflight exit status: %s\n' "$status" >&2; exit 1 ;;
+esac
+
+printf '%s\n' "$status" > "$output/exit-code.txt"
+printf 'result=%s\nexit_code=%s\nreason=%s\n' \
+    "$result" "$status" "$reason" > "$output/report.txt"

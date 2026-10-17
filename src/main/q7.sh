@@ -1,10 +1,26 @@
 #!/bin/bash
-# Q7：读取 input/remote.env，生成 ssh_config，用 SSH 和 SCP 获取远程数据。
-# 完整接口与验收规格见 Problem.pdf。只修改本文件，不修改测试或工具。
+# Connect with the supplied identity and pinned host key, then use SCP.
 set -eu
-input=${1:?需要输入目录}
-output=${2:?需要输出目录}
+input=${1:?Input directory required}
+output=${2:?Output directory required}
 
-# TODO：删除下方提示和 exit 77，再填写你的命令。
-printf '%s\n' 'Q7 尚未实现' >&2
-exit 77
+mkdir -p -- "$output/received"
+source "$input/remote.env"
+umask 077
+cat > "$output/ssh_config" <<EOF
+Host aim-sentry
+    HostName $HOST
+    Port $PORT
+    User $REMOTE_USER
+    IdentityFile "$KEY_PATH"
+    UserKnownHostsFile "$KNOWN_HOSTS"
+    IdentitiesOnly yes
+    IdentityAgent none
+    StrictHostKeyChecking yes
+    BatchMode yes
+    ConnectTimeout 3
+EOF
+chmod 600 "$output/ssh_config"
+
+ssh -F "$output/ssh_config" aim-sentry whoami > "$output/remote-user.txt"
+scp -F "$output/ssh_config" "aim-sentry:$REMOTE_LOG" "$output/received/errors.log"
